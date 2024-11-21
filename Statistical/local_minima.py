@@ -13,9 +13,9 @@ offset_limit = 2 #temp
 
 def show(particles, save):
     fig = plt.figure()
-    ax = fig.add_subplot()#projection="3d")
+    ax = fig.add_subplot(projection="3d")
     for particle in particles:
-        ax.scatter(particle[0], particle[1])#,particle[2])
+        ax.scatter(particle[0], particle[1],particle[2])
     if save is True: plt.savefig("particles.jpg") 
     plt.show()
 
@@ -23,7 +23,7 @@ def show(particles, save):
 def spawn_particles(n):
     particles = []
     for i in range(n):
-        particle = [random.randint(0, box_size), random.randint(0, box_size)]#, random.randint(0, box_size)]
+        particle = [random.randint(0, box_size), random.randint(0, box_size), random.randint(0, box_size)]
         particles.append(particle)
     return particles
 
@@ -33,7 +33,7 @@ def random_offset(particles):
         #print(particle, "before")
         particle[0] = abs(particle[0] + random.randint(-offset_limit, offset_limit)) if particle[0] < box_size-offset_limit else abs(particle[0]-offset_limit)
         particle[1] = abs(particle[1] + random.randint(-offset_limit, offset_limit)) if particle[1] < box_size-offset_limit else abs(particle[1]-offset_limit)
-        #particle[2] = abs(particle[2] + random.randint(-offset_limit, offset_limit)) if particle[2] < box_size-offset_limit else abs(particle[2]-offset_limit)
+        particle[2] = abs(particle[2] + random.randint(-offset_limit, offset_limit)) if particle[2] < box_size-offset_limit else abs(particle[2]-offset_limit)
         #print(particle, "after")
     return particles_copy
 
@@ -42,7 +42,7 @@ def distance(particles):
     for particle1 in particles:
         temp_table = []
         for particle2 in particles:
-            distance = math.sqrt((particle2[0]-particle1[0])**2 + (particle2[1]-particle1[1])**2)#+ (particle2[2]-particle1[2])**2)
+            distance = math.sqrt((particle2[0]-particle1[0])**2 + (particle2[1]-particle1[1])**2+ (particle2[2]-particle1[2])**2)
             temp_table.append(distance)
         distance_table.append(temp_table)
     return distance_table
@@ -65,7 +65,7 @@ def compute(potts):
             sum+=j
     return sum/2
 
-particles = spawn_particles(3)
+particles = spawn_particles(4)
 iteration = 0
 info = []
 
@@ -78,10 +78,9 @@ while True:
     distance_o = distance(offset_particles)
     potts_o = pottential(distance_o)
     pott_o = compute(potts_o)
-    '''
+
 
     #Send to LOCAL minima
-'''
     negative_pott = pott<0
     negative_pott_o = pott_o<0
     if negative_pott and negative_pott_o: 
@@ -90,18 +89,8 @@ while True:
         comparisn = pott > pott_o
     else:
         comparisn = abs(pott) > abs(pott_o)
-    '''
-    
-    #Send to GLOBAL minima
 
-    ratio = pott_o/pott if pott != 0 else 2
-    print(ratio)
-    if ratio < random.random()*10:
-        comparisn = True
-    else:
-        comparisn = False
-'''
-    if comparisn: #Without using ratio and shit so doesn't account for local minima
+    if comparisn: #dig between local and global
         particles = offset_particles
         print("yeah ") 
     else:
