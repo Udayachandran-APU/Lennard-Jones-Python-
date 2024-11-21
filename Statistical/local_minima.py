@@ -108,7 +108,7 @@ while True:
             writer = csv.writer(csvfile, delimiter=',')
             writer.writerow(data)
     
-    if iteration >= 1000:
+    if iteration >= 5000:
         break
     iteration+=1
 show(particles, save=True)    

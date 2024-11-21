@@ -13,17 +13,17 @@ offset_limit = 2 #temp
 
 def show(particles, save):
     fig = plt.figure()
-    ax = fig.add_subplot()#projection="3d")
+    ax = fig.add_subplot(projection="3d")
     for particle in particles:
-        ax.scatter(particle[0], particle[1])#,particle[2])
-    if save is True: plt.savefig("particles.jpg") 
+        ax.scatter(particle[0], particle[1],particle[2])
+    if save is True: plt.savefig("global_minima_particles.jpg") 
     plt.show()
 
 
 def spawn_particles(n):
     particles = []
     for i in range(n):
-        particle = [random.randint(0, box_size), random.randint(0, box_size)]#, random.randint(0, box_size)]
+        particle = [random.randint(0, box_size), random.randint(0, box_size), random.randint(0, box_size)]
         particles.append(particle)
     return particles
 
@@ -33,7 +33,7 @@ def random_offset(particles):
         #print(particle, "before")
         particle[0] = abs(particle[0] + random.randint(-offset_limit, offset_limit)) if particle[0] < box_size-offset_limit else abs(particle[0]-offset_limit)
         particle[1] = abs(particle[1] + random.randint(-offset_limit, offset_limit)) if particle[1] < box_size-offset_limit else abs(particle[1]-offset_limit)
-        #particle[2] = abs(particle[2] + random.randint(-offset_limit, offset_limit)) if particle[2] < box_size-offset_limit else abs(particle[2]-offset_limit)
+        particle[2] = abs(particle[2] + random.randint(-offset_limit, offset_limit)) if particle[2] < box_size-offset_limit else abs(particle[2]-offset_limit)
         #print(particle, "after")
     return particles_copy
 
@@ -42,7 +42,7 @@ def distance(particles):
     for particle1 in particles:
         temp_table = []
         for particle2 in particles:
-            distance = math.sqrt((particle2[0]-particle1[0])**2 + (particle2[1]-particle1[1])**2)#+ (particle2[2]-particle1[2])**2)
+            distance = math.sqrt((particle2[0]-particle1[0])**2 + (particle2[1]-particle1[1])**2+ (particle2[2]-particle1[2])**2)
             temp_table.append(distance)
         distance_table.append(temp_table)
     return distance_table
@@ -67,7 +67,7 @@ def compute(potts):
 
 particles = spawn_particles(3)
 iteration = 0
-info = []
+min_coords = []
 
 while True:
     distance_ = distance(particles)
@@ -78,38 +78,25 @@ while True:
     distance_o = distance(offset_particles)
     potts_o = pottential(distance_o)
     pott_o = compute(potts_o)
-    '''
-
-    #Send to LOCAL minima
-'''
-    negative_pott = pott<0
-    negative_pott_o = pott_o<0
-    if negative_pott and negative_pott_o: 
-        comparisn = pott > pott_o
-    elif not negative_pott and not negative_pott_o:
-        comparisn = pott > pott_o
-    else:
-        comparisn = abs(pott) > abs(pott_o)
-    '''
     
-    #Send to GLOBAL minima
-
-    ratio = pott_o/pott if pott != 0 else 2
-    print(ratio)
+    #Send to GLOBAL minima 
+    ratio = pott_o/pott if pott != 0 else 2 #Try using less simple algorithm cause jumps too often
     if ratio < random.random()*10:
         comparisn = True
     else:
         comparisn = False
-'''
-    if comparisn: #Without using ratio and shit so doesn't account for local minima
+
+    if comparisn: 
         particles = offset_particles
         print("yeah ") 
     else:
         print("no ")
 
+    #Make another data thing that you store, and only has the coordinates for the lowest energy
+
     #Write data to CSV
     data = [distance_[0][1], distance_o[0][1], pott, pott_o]
-    file_name = "eggs2.csv"
+    file_name = "global_minima.csv"
     if iteration == 0:
         with open(file_name, 'w', newline='\n') as csvfile:
             writer = csv.writer(csvfile, delimiter=',')
@@ -119,7 +106,7 @@ while True:
             writer = csv.writer(csvfile, delimiter=',')
             writer.writerow(data)
     
-    if iteration >= 1000:
+    if iteration >= 5000:
         break
     iteration+=1
 show(particles, save=True)    
