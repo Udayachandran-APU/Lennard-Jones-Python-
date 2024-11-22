@@ -65,15 +65,16 @@ def compute(potts):
             sum+=j
     return sum/2
 
-particles = spawn_particles(3)
+particles = spawn_particles(4)
 iteration = 0
 min_coords = []
+min_pott  = 0
 
 while True:
     distance_ = distance(particles)
     potts = pottential(distance_)
     pott = compute(potts)
-#debug point
+
     offset_particles = random_offset(particles)
     distance_o = distance(offset_particles)
     potts_o = pottential(distance_o)
@@ -82,20 +83,16 @@ while True:
     #Send to GLOBAL minima 
     ratio = pott_o/pott if pott != 0 else 2 #Try using less simple algorithm cause jumps too often
     if ratio < random.random()*10:
-        comparisn = True
-    else:
-        comparisn = False
-
-    if comparisn: 
         particles = offset_particles
-        print("yeah ") 
-    else:
-        print("no ")
-
-    #Make another data thing that you store, and only has the coordinates for the lowest energy
+    
+    #Store the lowest pottential value with coordinates
+    if min_pott > pott_o: 
+       min_coords = offset_particles
+       min_pott = pott_o
+       print("yeah")
 
     #Write data to CSV
-    data = [distance_[0][1], distance_o[0][1], pott, pott_o]
+    data = [pott, pott_o, min_pott]
     file_name = "global_minima.csv"
     if iteration == 0:
         with open(file_name, 'w', newline='\n') as csvfile:
@@ -106,7 +103,11 @@ while True:
             writer = csv.writer(csvfile, delimiter=',')
             writer.writerow(data)
     
-    if iteration >= 5000:
+    if iteration >= 10000:
         break
+
+    print(iteration)
     iteration+=1
-show(particles, save=True)    
+
+print(min_coords, min_pott)
+show(min_coords, save=True)    

@@ -16,7 +16,7 @@ def show(particles, save):
     ax = fig.add_subplot(projection="3d")
     for particle in particles:
         ax.scatter(particle[0], particle[1],particle[2])
-    if save is True: plt.savefig("particles.jpg") 
+    if save is True: plt.savefig("locaL_minima_particles.jpg") 
     plt.show()
 
 
@@ -73,32 +73,20 @@ while True:
     distance_ = distance(particles)
     potts = pottential(distance_)
     pott = compute(potts)
-#debug point
+
     offset_particles = random_offset(particles)
     distance_o = distance(offset_particles)
     potts_o = pottential(distance_o)
     pott_o = compute(potts_o)
 
-
     #Send to LOCAL minima
-    negative_pott = pott<0
-    negative_pott_o = pott_o<0
-    if negative_pott and negative_pott_o: 
-        comparisn = pott > pott_o
-    elif not negative_pott and not negative_pott_o:
-        comparisn = pott > pott_o
-    else:
-        comparisn = abs(pott) > abs(pott_o)
-
-    if comparisn: #dig between local and global
+    if pott_o < pott: 
         particles = offset_particles
-        print("yeah ") 
-    else:
-        print("no ")
+        print("lowered") 
 
     #Write data to CSV
     data = [distance_[0][1], distance_o[0][1], pott, pott_o]
-    file_name = "eggs2.csv"
+    file_name = "local_minima.csv"
     if iteration == 0:
         with open(file_name, 'w', newline='\n') as csvfile:
             writer = csv.writer(csvfile, delimiter=',')
@@ -110,5 +98,7 @@ while True:
     
     if iteration >= 5000:
         break
+    print(iteration)
     iteration+=1
+print(particles, pott)
 show(particles, save=True)    
