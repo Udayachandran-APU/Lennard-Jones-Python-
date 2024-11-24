@@ -37,26 +37,16 @@ def random_offset(particles):
         #print(particle, "after")
     return particles_copy
 
-def distance(particles):
-    distance_table = []
+def dist_pot(particles):
+    pot_table = []
     for particle1 in particles:
         temp_table = []
         for particle2 in particles:
-            distance = math.sqrt((particle2[0]-particle1[0])**2 + (particle2[1]-particle1[1])**2+ (particle2[2]-particle1[2])**2)
-            temp_table.append(distance)
-        distance_table.append(temp_table)
-    return distance_table
-
-def pottential(distances):
-    pot_table = []
-    for distance_x in distances:
-        temp_table = []
-        for distance in distance_x:
-            r = distance
-            pottential = 0 if distance == 0 else 4*ep*(((sig/r)**12) - ((sig/r)**6))
+            r = math.sqrt((particle2[0]-particle1[0])**2 + (particle2[1]-particle1[1])**2+ (particle2[2]-particle1[2])**2)
+            pottential = 0 if r == 0 else 4*ep*(((sig/r)**12) - ((sig/r)**6))
             temp_table.append(pottential)
         pot_table.append(temp_table)
-    return pot_table    
+    return pot_table
 
 def compute(potts):
     sum = 0
@@ -71,17 +61,15 @@ min_coords = []
 min_pott  = 0
 
 while True:
-    distance_ = distance(particles)
-    potts = pottential(distance_)
+    potts = dist_pot(particles)
     pott = compute(potts)
 
     offset_particles = random_offset(particles)
-    distance_o = distance(offset_particles)
-    potts_o = pottential(distance_o)
+    potts_o = dist_pot(offset_particles)
     pott_o = compute(potts_o)
     
     #Send to GLOBAL minima 
-    ratio = pott_o/pott if pott != 0 else 2 #Try using less simple algorithm cause jumps too often
+    ratio = pott_o/pott if pott != 0 else 0.5 #Try using less simple algorithm cause jumps too often
     if ratio < random.random()*10:
         particles = offset_particles
     
