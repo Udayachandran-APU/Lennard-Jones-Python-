@@ -1,8 +1,8 @@
 import numpy as np
 import copy, csv
 import matplotlib.pyplot as plt
-
-box_size = 420 #volume
+from numba import jit
+box_size = 450 #volume
 ep = 1 #minimum pottential in u-units (uday-units)
 sig = 100 #distance in u-units where pottential is zero
 offset_limit = 5 #step size
@@ -59,7 +59,7 @@ particles = spawn_particles(20)
 iteration = 0
 total_iterations = 70000
 T = 2
-min_temp = 0.2
+min_temp = 0.005
 Cooling_rate = 0.9995
 min_coords = []
 min_pot  = np.inf
@@ -70,17 +70,12 @@ while True:
 
     offset_particles = random_offset(particles, iteration, total_iterations)
     pots_o, pot_o = dist_pot(offset_particles)
-    
-    #Send to LOCAL minima
-    if pot_o < pot: 
-        particles = offset_particles
-        print("lowered") 
-    '''
+
     #Send to GLOBAL minima 
     del_E = pot_o - pot
     if del_E < 0 or np.random.random() < np.exp(-del_E / T):  # Accept lower or probabilistically higher
         particles = offset_particles  # Accept new configuration
-    '''
+    
 
     #Store the lowest pottential value with coordinates
     if min_pot > pot_o: 
@@ -97,9 +92,10 @@ while True:
     T = max(T, min_temp)
     iteration+=1
 
-
-print(min_coords, min_pot)
+'''
+print(min_pot)
 show(min_coords, save=False)    
 plt.plot(energies)
 plt.ylim(min_pot, min_pot + 0.2)
 plt.show()
+'''

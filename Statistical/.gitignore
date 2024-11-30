@@ -1,2 +1,8 @@
 *~
 *.swp
+before git/
+Old files/
+ignore/
+README.md
+*.csv
+*.jpg
