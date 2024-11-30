@@ -1,101 +1,98 @@
+import csv, os
 import numpy as np
-import copy, csv
 import matplotlib.pyplot as plt
 from numba import jit
+
+
 box_size = 450 #volume
 ep = 1 #minimum pottential in u-units (uday-units)
 sig = 100 #distance in u-units where pottential is zero
 offset_limit = 5 #step size
 
 def spawn_particles(n):
-    particles = np.random.uniform(0,box_size, size=(n,3)) 
+    particles = np.random.uniform(0,box_size, size=(n,3)) #I'm using uniform here 
     particles = particles.astype(np.float64)
     return particles
 
+
 def random_offset(particles, iteration, total_iterations): #The mask part hasn't been accounted for
-    particles_copy = copy.deepcopy(particles)
+    particles_copy = np.copy(particles)
     shape = particles.shape
     offset_amt = max(0.5, offset_limit * np.exp(- iteration / (0.2* total_iterations)))
     offset_particles =  particles_copy + np.random.uniform(-offset_amt, offset_amt, size=shape)
     offset_particles = offset_particles.clip(0, box_size) # no bounce back as hard to code
     return offset_particles
 
+
 def dist_pot(particles):
     #We are taking a 2d array, taking only the first row and making a nxn array where the rows are repeating. By doing this we can perform operations with it such as finding distance and pottential and shit
     difference = particles[:, np.newaxis] - particles #broadcasted array 
-    difference_squared = difference**2
-    distances = np.sqrt(np.sum(difference ** 2, axis=-1))
+    distances = np.sqrt(np.sum(difference ** 2, axis=-1)) #credits: https://stackoverflow.com/a/78032444
     np.fill_diagonal(distances, np.inf)
-    if np.min(distances) < 1e-2:
-        print("Particles are too close!")
-        input("press any key")
-
     pots = 4* ep * ((sig/distances)**12 - (sig/distances)**6)
     np.fill_diagonal(distances, 0)
-    pot = np.sum(np.triu(pots))
+    pot = np.sum(pots)/2
     return pots, pot
 
-def show(particles, save):
+
+def show(particles, pot_min, save):
+    file_name = "./images/lj_numpy.jpg"
+    if not os.path.exists("./images"):
+        os.mkdir("./images")
+
     fig = plt.figure()
     ax = fig.add_subplot(projection="3d")
+    ax.set_title(f"Mininima: {pot_min}")
     ax.scatter(particles[:,0], particles[:,1],particles[:, 2])
-    if save is True: plt.savefig("np_sandbox.jpg") 
+    if save is True: plt.savefig(file_name) 
     plt.show()
 
-def write_to_csv(iteration, pot, pot_o, min_pot):
+
+def write_to_csv(pot, pot_o, min_pot):
     data = [pot, pot_o, min_pot]
-    file_name = "np_sandbox.csv"
-    if iteration == 0:
-        with open(file_name, 'w', newline='\n') as csvfile:
-            writer = csv.writer(csvfile, delimiter=',')
-            writer.writerow(data)
-    else:
-        with open(file_name, 'a', newline='\n') as csvfile:
-            writer = csv.writer(csvfile, delimiter=',')
-            writer.writerow(data)
+    file_name = "./csv_files/lj_numpy.csv"
+    if not os.path.exists("./csv_files"):
+        os.mkdir("./csv_files")
+    with open(file_name, 'a', newline='\n') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',')
+        writer.writerow(data)
 
 
-particles = spawn_particles(20)
-iteration = 0
-total_iterations = 70000
-T = 2
-min_temp = 0.005
-Cooling_rate = 0.9995
-min_coords = []
-min_pot  = np.inf
-energies = np.array([])
-accepts = np.array([])
-while True:
-    pots, pot = dist_pot(particles)
-
-    offset_particles = random_offset(particles, iteration, total_iterations)
-    pots_o, pot_o = dist_pot(offset_particles)
-
-    #Send to GLOBAL minima 
-    del_E = pot_o - pot
-    if del_E < 0 or np.random.random() < np.exp(-del_E / T):  # Accept lower or probabilistically higher
-        particles = offset_particles  # Accept new configuration
+if __name__ == "__main__":
+    particles = spawn_particles(20)
+    total_iterations = 70000
+    T = 2
+    min_temp = 0.005
+    Cooling_rate = 0.9995
     
+    min_pot  = np.inf
+    iteration = 0
+    min_coords = []
+    energies = np.array([])
+    accepts = np.array([])
+    while iteration <= total_iterations:
+        pots, pot = dist_pot(particles)
+        offset_particles = random_offset(particles, iteration, total_iterations)
+        pots_o, pot_o = dist_pot(offset_particles)
 
-    #Store the lowest pottential value with coordinates
-    if min_pot > pot_o: 
-       print(f"Updating min_pot: {min_pot} -> {pot_o}")
-       min_coords = np.copy(offset_particles)
-       min_pot = pot_o
-    energies = np.append(energies, pot_o)
-    
-    
-    if iteration >= total_iterations:
-        break
-    print(iteration)
-    T*=Cooling_rate
-    T = max(T, min_temp)
-    iteration+=1
+        #Send to GLOBAL minima 
+        del_E = pot_o - pot
+        if del_E < 0 or np.random.random() < np.exp(-del_E / T):  # Shit's accepting too many wrong shit during later stages so annoying
+            particles = offset_particles     
 
-'''
-print(min_pot)
-show(min_coords, save=False)    
-plt.plot(energies)
-plt.ylim(min_pot, min_pot + 0.2)
-plt.show()
-'''
+        #Store the lowest pottential value with coordinates
+        if min_pot > pot_o: 
+            print(f"Updating min_pot: {min_pot} -> {pot_o}")
+            min_coords = np.copy(offset_particles)
+            min_pot = pot_o
+        energies = np.append(energies, pot_o)
+        
+        print(iteration)
+        T*=Cooling_rate
+        T = max(T, min_temp)
+        iteration+=1
+    
+    show(min_coords, min_pot, save=True)    
+    plt.plot(energies)
+    plt.ylim(min_pot, min_pot + 0.2)
+    plt.show()
