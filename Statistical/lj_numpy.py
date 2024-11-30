@@ -2,7 +2,7 @@ import numpy as np
 import copy, csv
 import matplotlib.pyplot as plt
 
-box_size = 350 #volume
+box_size = 420 #volume
 ep = 1 #minimum pottential in u-units (uday-units)
 sig = 100 #distance in u-units where pottential is zero
 offset_limit = 5 #step size
@@ -39,44 +39,10 @@ def show(particles, save):
     fig = plt.figure()
     ax = fig.add_subplot(projection="3d")
     ax.scatter(particles[:,0], particles[:,1],particles[:, 2])
-    ax.plot3D(particles[:,0], particles[:,1],particles[:, 2])
     if save is True: plt.savefig("np_sandbox.jpg") 
     plt.show()
 
-particles = spawn_particles(11)
-iteration = 0
-total_iterations = 50000
-T = 2
-Cooling_rate = 0.995
-min_coords = []
-min_pot  = np.inf
-energies = np.array([])
-
-while True:
-    pots, pot = dist_pot(particles)
-
-    offset_particles = random_offset(particles, iteration, total_iterations)
-    pots_o, pot_o = dist_pot(offset_particles)
-    '''
-    #Send to LOCAL minima
-    if pot_o < pot: 
-        particles = offset_particles
-        print("lowered") 
-    '''
-    #Send to GLOBAL minima 
-    del_E = pot_o - pot
-    if del_E < 0 or np.random.random() < np.exp(-del_E / T):  # Accept lower or probabilistically higher
-        particles = offset_particles  # Accept new configuration
-    
-    #Store the lowest pottential value with coordinates
-    if min_pot > pot_o: 
-       print(f"Updating min_pot: {min_pot} -> {pot_o}")
-       min_coords = np.copy(offset_particles)
-       min_pot = pot_o
-    
-    energies = np.append(energies, pot_o)
-    '''
-    #Write data to CSV
+def write_to_csv(iteration, pot, pot_o, min_pot):
     data = [pot, pot_o, min_pot]
     file_name = "np_sandbox.csv"
     if iteration == 0:
@@ -87,14 +53,48 @@ while True:
         with open(file_name, 'a', newline='\n') as csvfile:
             writer = csv.writer(csvfile, delimiter=',')
             writer.writerow(data)
+
+
+particles = spawn_particles(20)
+iteration = 0
+total_iterations = 70000
+T = 2
+min_temp = 0.2
+Cooling_rate = 0.9995
+min_coords = []
+min_pot  = np.inf
+energies = np.array([])
+accepts = np.array([])
+while True:
+    pots, pot = dist_pot(particles)
+
+    offset_particles = random_offset(particles, iteration, total_iterations)
+    pots_o, pot_o = dist_pot(offset_particles)
+    
+    #Send to LOCAL minima
+    if pot_o < pot: 
+        particles = offset_particles
+        print("lowered") 
     '''
+    #Send to GLOBAL minima 
+    del_E = pot_o - pot
+    if del_E < 0 or np.random.random() < np.exp(-del_E / T):  # Accept lower or probabilistically higher
+        particles = offset_particles  # Accept new configuration
+    '''
+
+    #Store the lowest pottential value with coordinates
+    if min_pot > pot_o: 
+       print(f"Updating min_pot: {min_pot} -> {pot_o}")
+       min_coords = np.copy(offset_particles)
+       min_pot = pot_o
+    energies = np.append(energies, pot_o)
+    
     
     if iteration >= total_iterations:
         break
-    
-    
     print(iteration)
     T*=Cooling_rate
+    T = max(T, min_temp)
     iteration+=1
 
 
