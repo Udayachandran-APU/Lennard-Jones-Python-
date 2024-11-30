@@ -5,6 +5,7 @@
 
 import random, math, time, copy, csv
 import matplotlib.pyplot as plt
+import numpy as np
 
 box_size = 150 #volume
 ep = 1 #minimum pottential in u-units (uday-units)
@@ -55,7 +56,7 @@ def compute(potts):
             sum+=j
     return sum/2
 
-particles = spawn_particles(4)
+particles = spawn_particles(8)
 iteration = 0
 min_coords = []
 min_pott  = 0
@@ -70,7 +71,9 @@ while True:
     
     #Send to GLOBAL minima 
     ratio = pott_o/pott if pott != 0 else 0.5 #Try using less simple algorithm cause jumps too often
-    if ratio < random.random()*10:
+    ratio_simple = pott_o < pott
+    accept = np.random.random() > 0.02
+    if ratio_simple and accept: 
         particles = offset_particles
     
     #Store the lowest pottential value with coordinates
@@ -91,7 +94,7 @@ while True:
             writer = csv.writer(csvfile, delimiter=',')
             writer.writerow(data)
     
-    if iteration >= 10000:
+    if iteration >= 20000:
         break
 
     print(iteration)
