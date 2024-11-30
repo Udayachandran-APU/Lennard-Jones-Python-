@@ -10,7 +10,7 @@ import numpy as np
 box_size = 150 #volume
 ep = 1 #minimum pottential in u-units (uday-units)
 sig = 100 #distance in u-units where pottential is zero
-offset_limit = 2 #temp
+offset_limit = 1 #temp
 
 def show(particles, save):
     fig = plt.figure()
@@ -56,7 +56,8 @@ def compute(potts):
             sum+=j
     return sum/2
 
-particles = spawn_particles(8)
+
+particles = spawn_particles(5)
 iteration = 0
 min_coords = []
 min_pott  = 0
@@ -73,7 +74,7 @@ while True:
     ratio = pott_o/pott if pott != 0 else 0.5 #Try using less simple algorithm cause jumps too often
     ratio_simple = pott_o < pott
     accept = np.random.random() > 0.02
-    if ratio_simple and accept: 
+    if ratio_simple or accept: 
         particles = offset_particles
     
     #Store the lowest pottential value with coordinates

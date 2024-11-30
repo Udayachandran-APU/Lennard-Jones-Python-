@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 box_size = 150 #volume
 ep = 1 #minimum pottential in u-units (uday-units)
 sig = 100 #distance in u-units where pottential is zero
-offset_limit = 2 #temp
+offset_limit = 3 #temp
 
 def show(particles, save):
     fig = plt.figure()
@@ -65,7 +65,7 @@ def compute(potts):
             sum+=j
     return sum/2
 
-particles = spawn_particles(4)
+particles = spawn_particles(6)
 iteration = 0
 info = []
 
@@ -78,6 +78,9 @@ while True:
     distance_o = distance(offset_particles)
     potts_o = pottential(distance_o)
     pott_o = compute(potts_o)
+    print(particles)
+    print(offset_particles)
+    exit()
 
     #Send to LOCAL minima
     if pott_o < pott: 
@@ -96,7 +99,7 @@ while True:
             writer = csv.writer(csvfile, delimiter=',')
             writer.writerow(data)
     
-    if iteration >= 5000:
+    if iteration >= 10000:
         break
     print(iteration)
     iteration+=1
