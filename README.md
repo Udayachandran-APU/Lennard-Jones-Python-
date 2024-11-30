@@ -1,11 +1,11 @@
-#Aim
+# Aim
 The aim of this project is to get an introduction to computational thermodynamics. 
-#Introduction
+# Introduction
 
-#Methods
+# Methods
 
-#Results
+# Results
 
-#Discussion
+# Discussion
 
-#Conclusion
+# Conclusion
